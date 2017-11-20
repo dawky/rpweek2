@@ -1,0 +1,120 @@
+---
+title: "rpweek2"
+author: "dawky"
+date: "Sunday, November 19, 2017"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(ggplot2) 
+library(lattice) 
+library(gridExtra) 
+
+setwd("D:/r/coursera")
+
+## Load and Observe Data 
+myfile <- "D:/r/coursera/activity.csv" 
+dat <- read.csv(myfile, stringsAsFactors=FALSE) 
+
+
+dat2 <- dat[complete.cases(dat),] 
+
+
+## What is mean total number of steps taken per day? 
+png("p1.png",width=480,height=480)
+
+ 
+
+data<-aggregate(steps ~ date, dat, FUN = sum) 
+
+stepsmean <- mean(data$steps) 
+stepsmedian <- median(data$steps)
+hist(data$steps,breaks=20,xlab="steps",main="steps taken per day",col="grey")
+legend("topright",col="blue",legend=c(paste("stepsmean",stepsmean),paste("stepsmedian",stepsmedian)))
+
+dev.off()
+
+## What is the average daily activity pattern? 
+
+png("p2.png",width=480,height=480)
+
+dat4 <- aggregate(steps ~ interval, dat2, FUN = mean) 
+maxsteps <- max(dat4$steps) 
+maxinterval <- dat4[dat4$steps == maxsteps, ]$interval
+plot(dat4$interval, dat4$steps, type = "l", main = "average daily activity pattern", 
+     xlab = "interval", ylab = "steps") 
+
+legend("topright",c(paste("maxinterval",maxinterval),paste("maxsteps",maxsteps))) 
+
+
+dev.off()
+
+## Imputing missing values 
+png("p3.png",width=480,height=480)
+
+dat5 <- dat
+for (i in 1:nrow(dat5)) { 
+  if (is.na(dat5[i, ]$steps)) { 
+    dat5[i, ]$steps <- 
+      dat4[dat4$interval ==dat5[i, ]$interval, ]$steps 
+  } 
+} 
+dat5a<-aggregate(steps ~ date, dat5, FUN = sum) 
+
+hist(dat5a$steps,breaks=20,xlab="steps",main="steps taken per day after inputing",col="grey")
+stepsmean5 <- mean(dat5a$steps) 
+stepsmedian5 <- median(dat5a$steps) 
+legend("topright",c(paste("stepsmean",stepsmean5),paste("stepsmedian",stepsmedian5)))
+
+
+
+dev.off()
+
+```
+
+## Do these values differ from the estimates from the first part of the assignment
+
+```{r}
+paste(stepsmean,stepsmedian)  
+paste(stepsmean5,stepsmedian5)
+```
+
+## impact of imputing missing data on the estimates of the total daily number of step
+```{r}
+sum(dat2$steps)  
+
+sum(dat5$steps)
+```
+
+```{r}
+
+## Are there differences in activity patterns between weekdays and weekends? 
+
+png("p4.png",width=480,height=480)
+
+dat5$day <- NA 
+for (i in 1:nrow(dat5)) { 
+  if (weekdays(as.Date(dat5[i, ]$date)) == "Saturday" | weekdays(as.Date(dat5[i, ]$date)) == "Sunday") { 
+    dat5[i, ]$day <- "weekend" }
+  else { 
+    dat5[i, ]$day <- "weekday" 
+  } 
+} 
+dat5$day <- factor(dat5$day) 
+dat6 <- aggregate(steps ~ interval + day, dat5, FUN = mean) 
+xyplot(steps ~ interval | factor(day), 
+       data = dat6, 
+       type = "l", 
+       layout = c(1,2), 
+       xlab = "Interval", 
+       ylab = "Number of Steps")
+
+dev.off()
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
